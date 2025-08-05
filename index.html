@@ -1,46 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Study Chat</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Study Chat App</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-    <div class="container">
-        <header>
-            <h1>📚 Study Chat</h1>
-            <div class="user-setup">
-                <input type="text" id="username" placeholder="Enter your name">
-                <input type="file" id="profile-pic" accept="image/*">
-                <button onclick="setUser()">Set Name</button>
-            </div>
-        </header>
+  <div class="app">
+    <header>
+      <h1>📚 Study Room</h1>
+      <button onclick="startStudy()">Start Study</button>
+      <button onclick="endStudy()">End Study</button>
+    </header>
 
-        <main>
-            <div id="channels">
-                <button onclick="switchChannel('general')">#general</button>
-                <button onclick="switchChannel('doubts')">#doubts</button>
-                <button onclick="switchChannel('resources')">#resources</button>
-                <button onclick="switchChannel('study')">#study</button>
-            </div>
-            <div id="chat-box"></div>
-        </main>
+    <section class="user-setup">
+      <input type="text" id="username" placeholder="Enter your name" />
+      <input type="file" id="profilePic" />
+      <button onclick="setUser()">Set Name</button>
+    </section>
 
-        <footer>
-            <input type="text" id="message" placeholder="Type your message">
-            <button onclick="sendMessage()">Send</button>
-            <button onclick="startStudy()">Start Study</button>
-            <button onclick="endStudy()">End Study</button>
-        </footer>
+    <section class="channel-selector">
+      <button onclick="switchChannel('general')">General</button>
+      <button onclick="switchChannel('doubts')">Doubts</button>
+      <button onclick="switchChannel('resources')">Resources</button>
+    </section>
+
+    <div class="chat-section">
+      <div class="chat-box" id="chatBox"></div>
+
+      <div class="message-input">
+        <input type="text" id="messageInput" placeholder="Type a message or emoji 😊" />
+        <input type="file" id="fileInput" />
+        <button onclick="sendMessage()">Send</button>
+      </div>
     </div>
 
-    <script src="script.js"></script>
-</body>
+    <footer>
+      <p>Your Study Rank: <span id="rank">Newbie</span></p>
+    </footer>
+  </div>
 
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="script.js"></script>
+</body>
 </html>
