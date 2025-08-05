@@ -13,87 +13,100 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let currentUser = { name: "", pic: "" };
+let username = "Anonymous";
+let profilePicData = "";
 let currentChannel = "general";
+let studyStartTime = null;
 
-// Set User
 function setUser() {
-    const nameInput = document.getElementById('username').value.trim();
-    const picInput = document.getElementById('profile-pic').files[0];
+  const nameInput = document.getElementById("username").value.trim();
+  const picInput = document.getElementById("profilePic").files[0];
 
-    if (!nameInput) return alert("Enter a name");
+  if (nameInput) {
+    username = nameInput;
+  }
 
-    if (picInput) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            currentUser.name = nameInput;
-            currentUser.pic = e.target.result;
-            alert("User set successfully!");
-        };
-        reader.readAsDataURL(picInput);
-    } else {
-        currentUser.name = nameInput;
-        currentUser.pic = ""; // default or blank
-        alert("User set successfully!");
-    }
-}
-
-// Switch Channels
-function switchChannel(channel) {
-    currentChannel = channel;
-    document.getElementById('chat-box').innerHTML = "";
-    listenToMessages();
-}
-
-// Send Message
-function sendMessage() {
-    const text = document.getElementById('message').value.trim();
-    if (!text || !currentUser.name) return alert("Set your name and type something!");
-
-    const msg = {
-        name: currentUser.name,
-        pic: currentUser.pic,
-        text: text,
-        time: Date.now()
+  if (picInput) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      profilePicData = e.target.result;
     };
+    reader.readAsDataURL(picInput);
+  }
 
-    db.ref("channels/" + currentChannel).push(msg);
-    document.getElementById('message').value = "";
+  alert("User set!");
 }
 
-// Listen for Messages
-function listenToMessages() {
-    db.ref("channels/" + currentChannel).on("value", (snapshot) => {
-        const chatBox = document.getElementById('chat-box');
-        chatBox.innerHTML = "";
-        snapshot.forEach(child => {
-            const msg = child.val();
-            const div = document.createElement("div");
-            div.className = "message";
-            div.innerHTML = `
-        <img src="${msg.pic || 'https://via.placeholder.com/40'}">
-        <strong>${msg.name}</strong>: ${msg.text}
-      `;
-            chatBox.appendChild(div);
-        });
-        chatBox.scrollTop = chatBox.scrollHeight;
-    });
+function sendMessage() {
+  const msg = document.getElementById("messageInput").value;
+  const file = document.getElementById("fileInput").files[0];
+  const messageData = {
+    user: username,
+    profilePic: profilePicData,
+    text: msg,
+    timestamp: Date.now()
+  };
+
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      messageData.file = e.target.result;
+      db.ref(`channels/${currentChannel}`).push(messageData);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    db.ref(`channels/${currentChannel}`).push(messageData);
+  }
+
+  document.getElementById("messageInput").value = "";
+  document.getElementById("fileInput").value = "";
 }
 
-// Study Timer
-let startTime = null;
+function renderMessage(data) {
+  const box = document.getElementById("chatBox");
+  const msgDiv = document.createElement("div");
+  msgDiv.classList.add("chat-message");
+
+  const img = data.profilePic ? `<img src="${data.profilePic}" width="30"/>` : "";
+  const file = data.file ? `<img src="${data.file}" />` : "";
+
+  msgDiv.innerHTML = `${img} <strong>${data.user}:</strong> ${data.text} ${file}`;
+  box.appendChild(msgDiv);
+  box.scrollTop = box.scrollHeight;
+}
+
+function switchChannel(channelName) {
+  currentChannel = channelName;
+  document.getElementById("chatBox").innerHTML = "";
+  listenToChannel();
+}
+
+function listenToChannel() {
+  db.ref(`channels/${currentChannel}`).off(); // Remove old listener
+  db.ref(`channels/${currentChannel}`).on("child_added", (snapshot) => {
+    renderMessage(snapshot.val());
+  });
+}
 
 function startStudy() {
-    startTime = Date.now();
-    alert("Study started!");
+  studyStartTime = Date.now();
 }
 
 function endStudy() {
-    if (!startTime) return alert("Start study first!");
-    const minutes = Math.floor((Date.now() - startTime) / 60000);
-    alert(`You studied for ${minutes} minutes.`);
-    startTime = null;
+  if (studyStartTime) {
+    const duration = Math.floor((Date.now() - studyStartTime) / 60000); // in minutes
+    updateRank(duration);
+  }
 }
 
-// Start with default channel
-listenToMessages();
+function updateRank(minutes) {
+  let rank = "Newbie";
+  if (minutes > 30) rank = "Learner";
+  if (minutes > 90) rank = "Scholar";
+  if (minutes > 180) rank = "Mastermind";
+
+  document.getElementById("rank").innerText = rank;
+}
+
+// Start listening to the default channel
+listenToChannel();
