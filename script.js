@@ -1,5 +1,4 @@
-
-// Firebase configuration (Replace with your actual config)
+// Initialize Firebase (Replace with your Firebase config)
 const firebaseConfig = {
   apiKey: "AIzaSyAcOs3hyYea3BM55R5GB-F0hObDbxgNrqA",
   authDomain: "study-web-8cd99.firebaseapp.com",
@@ -10,160 +9,108 @@ const firebaseConfig = {
   appId: "1:320613093347:web:5bb57a0b5c83fdc0e09ad6",
   measurementId: "G-TNZD8GNJFT"
 };
-
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Global
-let username = localStorage.getItem('username');
-let currentChannel = 'general';
-let startTime = null;
+let username = localStorage.getItem('username') || '';
 
-// DOM elements
 const setNameBtn = document.getElementById("setNameBtn");
 const nameInput = document.getElementById("nameInput");
-const nameBox = document.getElementById("nameBox");
-const messageInput = document.getElementById("messageInput");
+const setNameArea = document.getElementById("setNameArea");
+const chatSection = document.getElementById("chatSection");
 const sendBtn = document.getElementById("sendBtn");
-const messagesBox = document.getElementById("messages");
-const channelBtns = document.querySelectorAll(".channel-btn");
-const startStudyBtn = document.getElementById("startStudyBtn");
-const endStudyBtn = document.getElementById("endStudyBtn");
-const leaderboardBox = document.getElementById("leaderboard");
-const darkModeToggle = document.getElementById("darkModeToggle");
+const messageInput = document.getElementById("messageInput");
+const messagesDiv = document.getElementById("messages");
+const channelSelect = document.getElementById("channelSelect");
 
-// Name setup
+let currentChannel = "general";
+let studyTime = 0;
+let timerInterval = null;
+
+// Automatically hide set name area if already set
 if (username) {
-  nameBox.style.display = "none";
-} else {
-  nameBox.style.display = "block";
+    setNameArea.style.display = "none";
+    chatSection.style.display = "block";
+    startStudyTimer();
 }
 
 setNameBtn.addEventListener("click", () => {
-  const name = nameInput.value.trim();
-  if (name) {
-    localStorage.setItem("username", name);
-    username = name;
-    nameBox.style.display = "none";
-    loadMessages();
-    loadLeaderboard();
-  }
+    const name = nameInput.value.trim();
+    if (name !== "") {
+        username = name;
+        localStorage.setItem("username", username);
+        setNameArea.style.display = "none";
+        chatSection.style.display = "block";
+        startStudyTimer();
+    }
 });
 
-// Send message
+channelSelect.addEventListener("change", () => {
+    currentChannel = channelSelect.value;
+    loadMessages();
+});
+
 sendBtn.addEventListener("click", () => {
-  const text = messageInput.value.trim();
-  if (!text || !username) return;
+    const msg = messageInput.value.trim();
+    if (msg === "") return;
 
-  const msg = {
-    user: username,
-    text: text,
-    time: Date.now()
-  };
+    const newMsgRef = db.ref("channels/" + currentChannel).push();
+    newMsgRef.set({
+        user: username,
+        message: msg,
+        timestamp: Date.now()
+    });
 
-  db.ref(`${currentChannel}/messages`).push(msg);
-  messageInput.value = "";
+    messageInput.value = "";
 });
 
-// Load messages
 function loadMessages() {
-  db.ref(`${currentChannel}/messages`).off();
-  messagesBox.innerHTML = "";
-
-  db.ref(`${currentChannel}/messages`).on("child_added", (snap) => {
-    const msg = snap.val();
-    const msgDiv = document.createElement("div");
-    msgDiv.className = "message";
-
-    // Ping highlight
-    let msgText = msg.text;
-    if (msg.text.includes(`@${username}`)) {
-      msgText = `<span class="ping">@${username}</span>` + msg.text.replace(`@${username}`, '');
-    }
-
-    msgDiv.innerHTML = `
-      <strong>${msg.user}</strong>: ${msgText}
-      <small>${new Date(msg.time).toLocaleTimeString()}</small>
-    `;
-
-    // Delete button
-    if (msg.user === username) {
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "❌";
-      delBtn.className = "delete-btn";
-      delBtn.onclick = () => {
-        db.ref(`${currentChannel}/messages/${snap.key}`).remove();
-      };
-      msgDiv.appendChild(delBtn);
-    }
-
-    messagesBox.appendChild(msgDiv);
-    messagesBox.scrollTop = messagesBox.scrollHeight;
-  });
-
-  // On delete
-  db.ref(`${currentChannel}/messages`).on("child_removed", (snap) => {
-    loadMessages();
-  });
+    messagesDiv.innerHTML = "";
+    db.ref("channels/" + currentChannel).on("value", snapshot => {
+        messagesDiv.innerHTML = "";
+        snapshot.forEach(child => {
+            const data = child.val();
+            const msgElement = document.createElement("div");
+            msgElement.innerHTML = `<strong>${data.user}:</strong> ${highlightMentions(data.message)}`;
+            messagesDiv.appendChild(msgElement);
+        });
+    });
 }
 
-// Switch channels
-channelBtns.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    currentChannel = btn.dataset.channel;
-    loadMessages();
-  });
-});
-
-// Study Timer
-startStudyBtn.addEventListener("click", () => {
-  startTime = Date.now();
-  alert("Study timer started!");
-});
-
-endStudyBtn.addEventListener("click", () => {
-  if (!startTime) return alert("Start timer first!");
-  const endTime = Date.now();
-  const minutes = Math.floor((endTime - startTime) / 60000);
-
-  const studyRef = db.ref(`study/${username}`);
-  studyRef.once("value").then((snap) => {
-    const oldTime = snap.val() || 0;
-    studyRef.set(oldTime + minutes);
-    alert(`Study session saved: ${minutes} minutes`);
-    loadLeaderboard();
-  });
-
-  startTime = null;
-});
-
-// Leaderboard
-function loadLeaderboard() {
-  leaderboardBox.innerHTML = "";
-  db.ref("study").once("value", (snap) => {
-    const data = [];
-    snap.forEach((child) => {
-      data.push({ user: child.key, minutes: child.val() });
-    });
-
-    data.sort((a, b) => b.minutes - a.minutes);
-    data.forEach((entry, i) => {
-      const li = document.createElement("li");
-      li.textContent = `#${i + 1} ${entry.user} - ${entry.minutes} min`;
-      leaderboardBox.appendChild(li);
-    });
-  });
+function highlightMentions(message) {
+    if (!username) return message;
+    return message.replaceAll(`@${username}`, `<span style="color:#4fc3f7; font-weight:bold;">@${username}</span>`);
 }
 
-// Dark Mode Toggle
-darkModeToggle.addEventListener("click", () => {
-  document.body.classList.toggle("dark-mode");
-  const mode = document.body.classList.contains("dark-mode") ? "Dark" : "Light";
-  darkModeToggle.textContent = `${mode} Mode`;
-});
+function startStudyTimer() {
+    const startTime = Date.now();
+    timerInterval = setInterval(() => {
+        const currentTime = Date.now();
+        studyTime = Math.floor((currentTime - startTime) / 1000);
+        updateRank(studyTime);
+    }, 1000);
+}
 
-// Init
-if (username) {
-  loadMessages();
-  loadLeaderboard();
+function updateRank(time) {
+    const ranks = [
+        { name: "Newbie", time: 0 },
+        { name: "Learner", time: 600 },
+        { name: "Scholar", time: 1800 },
+        { name: "Mastermind", time: 3600 },
+        { name: "Study Legend", time: 7200 }
+    ];
+
+    const rank = ranks.slice().reverse().find(r => time >= r.time);
+    document.getElementById("rank").textContent = `Rank: ${rank.name}`;
+}
+
+// Theme toggle (Dark/Light)
+const themeToggle = document.getElementById("themeToggle");
+themeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+    const isDark = document.body.classList.contains("dark-mode");
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+});
+if (localStorage.getItem("theme") === "dark") {
+    document.body.classList.add("dark-mode");
 }
