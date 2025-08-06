@@ -1,4 +1,4 @@
-// Initialize Firebase (Replace with your Firebase config)
+const firebaseConfig = {
 const firebaseConfig = {
   apiKey: "AIzaSyAcOs3hyYea3BM55R5GB-F0hObDbxgNrqA",
   authDomain: "study-web-8cd99.firebaseapp.com",
@@ -9,108 +9,112 @@ const firebaseConfig = {
   appId: "1:320613093347:web:5bb57a0b5c83fdc0e09ad6",
   measurementId: "G-TNZD8GNJFT"
 };
+
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let username = localStorage.getItem('username') || '';
-
-const setNameBtn = document.getElementById("setNameBtn");
-const nameInput = document.getElementById("nameInput");
-const setNameArea = document.getElementById("setNameArea");
-const chatSection = document.getElementById("chatSection");
-const sendBtn = document.getElementById("sendBtn");
-const messageInput = document.getElementById("messageInput");
-const messagesDiv = document.getElementById("messages");
-const channelSelect = document.getElementById("channelSelect");
-
+let username = localStorage.getItem("username") || null;
 let currentChannel = "general";
-let studyTime = 0;
-let timerInterval = null;
+let timeStudied = 0;
 
-// Automatically hide set name area if already set
-if (username) {
-    setNameArea.style.display = "none";
-    chatSection.style.display = "block";
-    startStudyTimer();
+const messagesDiv = document.getElementById("messages");
+const messageInput = document.getElementById("message-input");
+const sendBtn = document.getElementById("send-btn");
+const fileInput = document.getElementById("file-input");
+const setNameBtn = document.getElementById("set-name-btn");
+const timeDisplay = document.getElementById("time");
+const toggleThemeBtn = document.getElementById("toggle-theme");
+
+function renderMessage(msg, id) {
+  const msgDiv = document.createElement("div");
+  msgDiv.className = "message";
+  msgDiv.innerHTML = `<span>@${msg.user}</span>: ${msg.text} ${msg.file ? `<a href="${msg.file}" target="_blank">📎</a>` : ''}`;
+  if (msg.user === username) {
+    const del = document.createElement("button");
+    del.textContent = "🗑️";
+    del.onclick = () => db.ref(`${currentChannel}/${id}`).remove();
+    msgDiv.appendChild(del);
+  }
+  messagesDiv.appendChild(msgDiv);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-setNameBtn.addEventListener("click", () => {
-    const name = nameInput.value.trim();
-    if (name !== "") {
-        username = name;
-        localStorage.setItem("username", username);
-        setNameArea.style.display = "none";
-        chatSection.style.display = "block";
-        startStudyTimer();
-    }
-});
-
-channelSelect.addEventListener("change", () => {
-    currentChannel = channelSelect.value;
-    loadMessages();
-});
-
-sendBtn.addEventListener("click", () => {
-    const msg = messageInput.value.trim();
-    if (msg === "") return;
-
-    const newMsgRef = db.ref("channels/" + currentChannel).push();
-    newMsgRef.set({
-        user: username,
-        message: msg,
-        timestamp: Date.now()
+function listenForMessages() {
+  messagesDiv.innerHTML = "";
+  db.ref(currentChannel).on("child_added", snapshot => {
+    renderMessage(snapshot.val(), snapshot.key);
+  });
+  db.ref(currentChannel).on("child_removed", snapshot => {
+    document.querySelectorAll(".message").forEach(el => {
+      if (el.textContent.includes(snapshot.val().text)) el.remove();
     });
+  });
+}
 
-    messageInput.value = "";
+sendBtn.onclick = () => {
+  const text = messageInput.value.trim();
+  if (!text && !fileInput.files[0]) return;
+  const data = {
+    user: username || "Anonymous",
+    text: text || "",
+    time: Date.now()
+  };
+  if (fileInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      data.file = e.target.result;
+      db.ref(currentChannel).push(data);
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+  } else {
+    db.ref(currentChannel).push(data);
+  }
+  messageInput.value = "";
+  fileInput.value = "";
+};
+
+setNameBtn.onclick = () => {
+  const name = prompt("Enter your name:");
+  if (name) {
+    username = name;
+    localStorage.setItem("username", username);
+    setNameBtn.style.display = "none";
+  }
+};
+
+if (username) setNameBtn.style.display = "none";
+
+document.querySelectorAll("#channels li").forEach(li => {
+  li.onclick = () => {
+    document.querySelector(".active").classList.remove("active");
+    li.classList.add("active");
+    currentChannel = li.dataset.channel;
+    document.getElementById("current-channel").textContent = `# ${li.textContent.trim()}`;
+    listenForMessages();
+  };
 });
 
-function loadMessages() {
-    messagesDiv.innerHTML = "";
-    db.ref("channels/" + currentChannel).on("value", snapshot => {
-        messagesDiv.innerHTML = "";
-        snapshot.forEach(child => {
-            const data = child.val();
-            const msgElement = document.createElement("div");
-            msgElement.innerHTML = `<strong>${data.user}:</strong> ${highlightMentions(data.message)}`;
-            messagesDiv.appendChild(msgElement);
-        });
-    });
-}
+toggleThemeBtn.onclick = () => {
+  document.body.classList.toggle("light");
+};
 
-function highlightMentions(message) {
-    if (!username) return message;
-    return message.replaceAll(`@${username}`, `<span style="color:#4fc3f7; font-weight:bold;">@${username}</span>`);
-}
+setInterval(() => {
+  timeStudied++;
+  timeDisplay.textContent = timeStudied;
+  db.ref("ranks/" + username).set(timeStudied);
+}, 60000);
 
-function startStudyTimer() {
-    const startTime = Date.now();
-    timerInterval = setInterval(() => {
-        const currentTime = Date.now();
-        studyTime = Math.floor((currentTime - startTime) / 1000);
-        updateRank(studyTime);
-    }, 1000);
-}
-
-function updateRank(time) {
-    const ranks = [
-        { name: "Newbie", time: 0 },
-        { name: "Learner", time: 600 },
-        { name: "Scholar", time: 1800 },
-        { name: "Mastermind", time: 3600 },
-        { name: "Study Legend", time: 7200 }
-    ];
-
-    const rank = ranks.slice().reverse().find(r => time >= r.time);
-    document.getElementById("rank").textContent = `Rank: ${rank.name}`;
-}
-
-// Theme toggle (Dark/Light)
-const themeToggle = document.getElementById("themeToggle");
-themeToggle.addEventListener("click", () => {
-    document.body.classList.toggle("dark-mode");
-    const isDark = document.body.classList.contains("dark-mode");
-    localStorage.setItem("theme", isDark ? "dark" : "light");
+db.ref("ranks").on("value", snapshot => {
+  const list = document.getElementById("rank-list");
+  list.innerHTML = "";
+  const ranks = [];
+  snapshot.forEach(child => ranks.push({ user: child.key, time: child.val() }));
+  ranks.sort((a, b) => b.time - a.time);
+  for (const rank of ranks.slice(0, 5)) {
+    const li = document.createElement("li");
+    li.textContent = `${rank.user}: ${rank.time} mins`;
+    list.appendChild(li);
+  }
 });
-if (localStorage.getItem("theme") === "dark") {
-    document.body.classList.add("dark-mode");
-}
+
+listenForMessages();
