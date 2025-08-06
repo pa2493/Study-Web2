@@ -1,5 +1,4 @@
 const firebaseConfig = {
-const firebaseConfig = {
   apiKey: "AIzaSyAcOs3hyYea3BM55R5GB-F0hObDbxgNrqA",
   authDomain: "study-web-8cd99.firebaseapp.com",
   databaseURL: "https://study-web-8cd99-default-rtdb.asia-southeast1.firebasedatabase.app",
