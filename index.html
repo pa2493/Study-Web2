@@ -43,9 +43,43 @@
       </form>
     </main>
   </div>
+<!-- Name Box -->
+<div id="nameBox">
+  <input type="text" id="nameInput" placeholder="Enter your name">
+  <button id="setNameBtn">Set Name</button>
+</div>
 
+<!-- Channel buttons -->
+<div>
+  <button class="channel-btn" data-channel="general">#general</button>
+  <button class="channel-btn" data-channel="notes">#notes</button>
+  <button class="channel-btn" data-channel="doubts">#doubts</button>
+  <button class="channel-btn" data-channel="resources">#resources</button>
+  <button class="channel-btn" data-channel="discussion">#discussion</button>
+</div>
+
+<!-- Message UI -->
+<textarea id="messageInput" placeholder="Message..."></textarea>
+<button id="sendBtn">Send</button>
+
+<!-- Messages box -->
+<div id="messages"></div>
+
+<!-- Study Tracker -->
+<button id="startStudyBtn">Start Study</button>
+<button id="endStudyBtn">End Study</button>
+
+<!-- Leaderboard -->
+<ul id="leaderboard"></ul>
+
+<!-- Dark Mode -->
+<button id="darkModeToggle">Light Mode</button>
+
+
+  
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
+
