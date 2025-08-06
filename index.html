@@ -3,46 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Study Chat App</title>
+  <title>Study App</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app">
-    <header>
-      <h1>📚 Study Room</h1>
-      <button onclick="startStudy()">Start Study</button>
-      <button onclick="endStudy()">End Study</button>
-    </header>
-
-    <section class="user-setup">
-      <input type="text" id="username" placeholder="Enter your name" />
-      <input type="file" id="profilePic" />
-      <button onclick="setUser()">Set Name</button>
-    </section>
-
-    <section class="channel-selector">
-      <button onclick="switchChannel('general')">General</button>
-      <button onclick="switchChannel('doubts')">Doubts</button>
-      <button onclick="switchChannel('resources')">Resources</button>
-    </section>
-
-    <div class="chat-section">
-      <div class="chat-box" id="chatBox"></div>
-
-      <div class="message-input">
-        <input type="text" id="messageInput" placeholder="Type a message or emoji 😊" />
-        <input type="file" id="fileInput" />
-        <button onclick="sendMessage()">Send</button>
+    <aside class="sidebar">
+      <h2>Study Channels</h2>
+      <ul id="channels">
+        <li data-channel="general" class="active">#general</li>
+        <li data-channel="doubts">#doubts</li>
+        <li data-channel="notes">#notes</li>
+        <li data-channel="resources">#resources</li>
+        <li data-channel="study-time">#study-time</li>
+      </ul>
+      <div class="controls">
+        <button id="startBtn">Start Study</button>
+        <button id="stopBtn">End Study</button>
+        <button id="toggleMode">Toggle Mode</button>
       </div>
-    </div>
+      <div class="leaderboard">
+        <h3>🏆 Leaderboard</h3>
+        <ul id="rankings"></ul>
+      </div>
+    </aside>
 
-    <footer>
-      <p>Your Study Rank: <span id="rank">Newbie</span></p>
-    </footer>
+    <main class="chat">
+      <header>
+        <h2 id="channel-name">#general</h2>
+        <button id="setNameBtn">Set Name</button>
+      </header>
+
+      <section class="messages" id="messages"></section>
+
+      <form id="msgForm">
+        <input type="file" id="fileInput" />
+        <input type="text" id="messageInput" placeholder="Type a message..." required />
+        <button type="submit">Send</button>
+      </form>
+    </main>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
