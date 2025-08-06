@@ -3,83 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Study App</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>StudyHub</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
-      <h2>Study Channels</h2>
+      <h2>StudyHub</h2>
       <ul id="channels">
-        <li data-channel="general" class="active">#general</li>
-        <li data-channel="doubts">#doubts</li>
-        <li data-channel="notes">#notes</li>
-        <li data-channel="resources">#resources</li>
-        <li data-channel="study-time">#study-time</li>
+        <li data-channel="general" class="active"># General</li>
+        <li data-channel="notes"># Notes</li>
+        <li data-channel="doubts"># Doubts</li>
+        <li data-channel="resources"># Resources</li>
+        <li data-channel="questions"># Questions</li>
       </ul>
-      <div class="controls">
-        <button id="startBtn">Start Study</button>
-        <button id="stopBtn">End Study</button>
-        <button id="toggleMode">Toggle Mode</button>
-      </div>
+      <button id="toggle-theme">🌙</button>
       <div class="leaderboard">
         <h3>🏆 Leaderboard</h3>
-        <ul id="rankings"></ul>
+        <ul id="rank-list"></ul>
       </div>
     </aside>
 
-    <main class="chat">
+    <main>
       <header>
-        <h2 id="channel-name">#general</h2>
-        <button id="setNameBtn">Set Name</button>
+        <span id="current-channel"># General</span>
+        <span id="study-time">⏱️ Studied: <span id="time">0</span> mins</span>
+        <button id="set-name-btn">Set Name</button>
       </header>
-
-      <section class="messages" id="messages"></section>
-
-      <form id="msgForm">
-        <input type="file" id="fileInput" />
-        <input type="text" id="messageInput" placeholder="Type a message..." required />
-        <button type="submit">Send</button>
-      </form>
+      <div id="messages" class="messages"></div>
+      <div class="input-area">
+        <input type="text" id="message-input" placeholder="Type a message..."/>
+        <input type="file" id="file-input"/>
+        <button id="send-btn">Send</button>
+      </div>
     </main>
   </div>
-<!-- Name Box -->
-<div id="nameBox">
-  <input type="text" id="nameInput" placeholder="Enter your name">
-  <button id="setNameBtn">Set Name</button>
-</div>
 
-<!-- Channel buttons -->
-<div>
-  <button class="channel-btn" data-channel="general">#general</button>
-  <button class="channel-btn" data-channel="notes">#notes</button>
-  <button class="channel-btn" data-channel="doubts">#doubts</button>
-  <button class="channel-btn" data-channel="resources">#resources</button>
-  <button class="channel-btn" data-channel="discussion">#discussion</button>
-</div>
-
-<!-- Message UI -->
-<textarea id="messageInput" placeholder="Message..."></textarea>
-<button id="sendBtn">Send</button>
-
-<!-- Messages box -->
-<div id="messages"></div>
-
-<!-- Study Tracker -->
-<button id="startStudyBtn">Start Study</button>
-<button id="endStudyBtn">End Study</button>
-
-<!-- Leaderboard -->
-<ul id="leaderboard"></ul>
-
-<!-- Dark Mode -->
-<button id="darkModeToggle">Light Mode</button>
-
-
-  
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-  <script src="script.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
-
